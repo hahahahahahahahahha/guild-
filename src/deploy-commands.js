@@ -32,10 +32,13 @@ const rest = new REST().setToken(config.token);
     console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
     // The put method is used to fully refresh all commands in the guild with the current set
+    // For Discord.js v14, we need to use the client ID directly
+    // Let's extract it from the token properly
+    const clientId = atob(config.token.split('.')[0]);
+    
     const data = await rest.put(
       Routes.applicationGuildCommands(
-        // Get the client ID from the token (first part of the token before the first dot)
-        config.token.split('.')[0],
+        clientId,
         config.guildId
       ),
       { body: commands },

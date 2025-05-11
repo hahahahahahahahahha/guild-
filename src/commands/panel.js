@@ -16,10 +16,12 @@ export async function execute(interaction) {
     '> Select a management option below to get started.\n\n' +
     '**Role Management**\n' +
     '• Create, delete, and move roles\n' +
-    '• Manage role permissions\n\n' +
+    '• Manage role permissions\n' +
+    '• Bulk role operations\n\n' +
     '**Channel Management**\n' +
     '• Create, delete, and move channels\n' +
-    '• Manage channel settings'
+    '• Manage channel permissions\n' +
+    '• Bulk channel operations'
   );
 
   // Create the select menu for choosing management type
@@ -38,6 +40,24 @@ export async function execute(interaction) {
         description: 'Manage server channels',
         value: 'channel_management',
         emoji: '📝'
+      },
+      {
+        label: 'Role Permissions',
+        description: 'Manage role permissions',
+        value: 'role_permissions',
+        emoji: '🔒'
+      },
+      {
+        label: 'Channel Permissions',
+        description: 'Manage channel permissions',
+        value: 'channel_permissions',
+        emoji: '🔐'
+      },
+      {
+        label: 'Bulk Operations',
+        description: 'Perform bulk operations on roles and channels',
+        value: 'bulk_operations',
+        emoji: '⚡'
       }
     ]);
 
