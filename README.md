@@ -1,18 +1,18 @@
 # Discord Guild Management Bot
 
-A Discord bot for managing roles and channels through an interactive interface with buttons and select menus.
+A powerful Discord bot built with Discord.js v14 that provides comprehensive role and channel management through an interactive interface with buttons and select menus.
 
 ## Features
 
 ### Role Management
-- Create new roles with custom name, color, and position
-- Delete existing roles
-- Move roles up and down in the hierarchy
+- **Create Roles**: Create new roles with custom names, colors, and positions through a modal form
+- **Delete Roles**: Safely remove roles with confirmation through select menus
+- **Move Roles**: Adjust role positions in the hierarchy with up/down controls
 
 ### Channel Management
-- Create new channels with custom name, type, and category
-- Delete existing channels
-- Move channels up and down in the list
+- **Create Channels**: Create new text, voice, or category channels with custom settings
+- **Delete Channels**: Remove channels with confirmation to prevent accidental deletion
+- **Move Channels**: Adjust channel positions in the server with intuitive controls
 
 ## Setup
 
@@ -65,9 +65,30 @@ A Discord bot for managing roles and channels through an interactive interface w
 This bot uses ESM modules. To add new features:
 
 1. Create new command files in `src/commands/`
-2. Create new component handlers in `src/components/`
+2. Create new component handlers in `src/components/`:
+   - `buttons/` - Button interaction handlers
+   - `selectMenus/` - Select menu interaction handlers
+   - `modals/` - Modal form submission handlers
 3. Deploy the commands with `npm run deploy`
 4. Start the bot with `npm start` or `npm run dev` for development
+
+## Project Structure
+
+```
+src/
+├── commands/           # Slash commands
+│   └── panel.js        # Main panel command
+├── components/         # UI components
+│   ├── buttons/        # Button handlers
+│   ├── modals/         # Modal form handlers
+│   └── selectMenus/    # Select menu handlers
+├── utils/              # Utility functions
+│   ├── embeds.js       # Embed creators
+│   └── permissions.js  # Permission checks
+├── config.js           # Bot configuration
+├── deploy-commands.js  # Command deployment script
+└── index.js            # Main bot file
+```
 
 ## License
 
