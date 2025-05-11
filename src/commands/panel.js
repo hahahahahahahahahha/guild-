@@ -15,11 +15,11 @@ export async function execute(interaction) {
     'Guild Management Panel',
     '> Select a management option below to get started.\n\n' +
     '**Role Management**\n' +
-    '• Create, delete, and move roles\n' +
+    '• View, create, delete, and move roles\n' +
     '• Manage role permissions\n' +
     '• Bulk role operations\n\n' +
     '**Channel Management**\n' +
-    '• Create, delete, and move channels\n' +
+    '• View, create, delete, and move channels\n' +
     '• Manage channel permissions\n' +
     '• Bulk channel operations'
   );
@@ -29,6 +29,18 @@ export async function execute(interaction) {
     .setCustomId('panel_select')
     .setPlaceholder('Select management type')
     .addOptions([
+      {
+        label: 'View Roles',
+        description: 'View all server roles',
+        value: 'view_roles',
+        emoji: '👁️'
+      },
+      {
+        label: 'View Channels',
+        description: 'View all server channels',
+        value: 'view_channels',
+        emoji: '📋'
+      },
       {
         label: 'Role Management',
         description: 'Manage server roles',

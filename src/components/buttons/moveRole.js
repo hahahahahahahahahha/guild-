@@ -44,8 +44,9 @@ export async function execute(interaction) {
       'After selecting a role, you will be able to move it up or down in the role hierarchy.'
     );
 
-    // Create the select menu with the available roles
-    const selectOptions = availableRoles.map(role => ({
+    // Create the select menu with the available roles (limit to 25 options due to Discord API limitations)
+    const sortedRoles = [...availableRoles.values()].sort((a, b) => b.position - a.position);
+    const selectOptions = sortedRoles.slice(0, 25).map(role => ({
       label: role.name,
       description: `Position: ${role.position}`,
       value: role.id,

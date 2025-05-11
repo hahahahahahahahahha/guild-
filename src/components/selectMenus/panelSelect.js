@@ -11,7 +11,15 @@ export async function execute(interaction) {
   const selectedValue = interaction.values[0];
   let embed, components = [];
 
-  if (selectedValue === 'role_management') {
+  if (selectedValue === 'view_roles') {
+    // Execute the viewRoles button handler
+    const viewRolesHandler = await import('../buttons/viewRoles.js');
+    return await viewRolesHandler.execute(interaction);
+  } else if (selectedValue === 'view_channels') {
+    // Execute the viewChannels button handler
+    const viewChannelsHandler = await import('../buttons/viewChannels.js');
+    return await viewChannelsHandler.execute(interaction);
+  } else if (selectedValue === 'role_management') {
     // Role management panel
     embed = createPanelEmbed(
       'Role Management',
