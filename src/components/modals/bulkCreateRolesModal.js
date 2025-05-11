@@ -1,6 +1,6 @@
 import { EmbedBuilder } from 'discord.js';
 import { checkAdmin } from '../../utils/permissions.js';
-import { createSuccessEmbed, createErrorEmbed, createProgressEmbed } from '../../utils/embeds.js';
+import { createSuccessEmbed, createErrorEmbed, createLoadingEmbed } from '../../utils/embeds.js';
 
 export const customId = 'bulk_create_roles_modal';
 
@@ -53,7 +53,7 @@ export async function execute(interaction) {
 
   // Send an initial response
   await interaction.reply({
-    embeds: [createProgressEmbed('Creating Roles', `Starting to create ${roleNames.length} roles...`)],
+    embeds: [createLoadingEmbed('Creating Roles', `Starting to create ${roleNames.length} roles...`)],
     ephemeral: true
   });
 
@@ -77,7 +77,7 @@ export async function execute(interaction) {
       
       // Update the progress
       await interaction.editReply({
-        embeds: [createProgressEmbed(
+        embeds: [createLoadingEmbed(
           'Creating Roles',
           `Progress: ${i + 1}/${roleNames.length} roles created\n\n` +
           `Last created: **${role.name}**`

@@ -1,6 +1,6 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { checkAdmin } from '../../utils/permissions.js';
-import { createSuccessEmbed, createErrorEmbed, createProgressEmbed, createPanelEmbed } from '../../utils/embeds.js';
+import { createSuccessEmbed, createErrorEmbed, createLoadingEmbed, createPanelEmbed } from '../../utils/embeds.js';
 
 export const customId = 'bulk_color_roles_modal';
 
@@ -24,7 +24,7 @@ export async function execute(interaction) {
 
   // Send an initial response
   await interaction.reply({
-    embeds: [createProgressEmbed('Coloring Roles', `Starting to color ${roleIds.length} roles with ${color}...`)],
+    embeds: [createLoadingEmbed('Coloring Roles', `Starting to color ${roleIds.length} roles with ${color}...`)],
     ephemeral: true
   });
 
@@ -51,7 +51,7 @@ export async function execute(interaction) {
       
       // Update the progress
       await interaction.editReply({
-        embeds: [createProgressEmbed(
+        embeds: [createLoadingEmbed(
           'Coloring Roles',
           `Progress: ${i + 1}/${roleIds.length} roles colored\n\n` +
           `Last colored: **${role.name}**`

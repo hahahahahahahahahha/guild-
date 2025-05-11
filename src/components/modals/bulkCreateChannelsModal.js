@@ -1,6 +1,6 @@
 import { EmbedBuilder, ChannelType } from 'discord.js';
 import { checkAdmin } from '../../utils/permissions.js';
-import { createSuccessEmbed, createErrorEmbed, createProgressEmbed } from '../../utils/embeds.js';
+import { createSuccessEmbed, createErrorEmbed, createLoadingEmbed } from '../../utils/embeds.js';
 
 export const customId = 'bulk_create_channels_modal';
 
@@ -68,7 +68,7 @@ export async function execute(interaction) {
 
   // Send an initial response
   await interaction.reply({
-    embeds: [createProgressEmbed('Creating Channels', `Starting to create ${channelNames.length} channels...`)],
+    embeds: [createLoadingEmbed('Creating Channels', `Starting to create ${channelNames.length} channels...`)],
     ephemeral: true
   });
 
@@ -92,7 +92,7 @@ export async function execute(interaction) {
       
       // Update the progress
       await interaction.editReply({
-        embeds: [createProgressEmbed(
+        embeds: [createLoadingEmbed(
           'Creating Channels',
           `Progress: ${i + 1}/${channelNames.length} channels created\n\n` +
           `Last created: **${channel.name}** (${channel.id})`
