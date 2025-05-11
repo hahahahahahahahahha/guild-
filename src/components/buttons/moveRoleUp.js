@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import { createSuccessEmbed, createErrorEmbed, createLoadingEmbed } from '../../utils/embeds.js';
 import { checkAdmin } from '../../utils/permissions.js';
 
@@ -11,6 +11,11 @@ export async function execute(interaction) {
   // Get the role ID from the custom ID
   const roleId = interaction.customId.split(':')[1];
 
+  // Determine if this is a direct interaction or from the manage role interface
+  const isFromManageRole = interaction.message.components.some(row => 
+    row.components.some(component => component.customId === `manage_role:${roleId}`)
+  );
+
   try {
     // Get the role
     const role = await interaction.guild.roles.fetch(roleId);
@@ -18,95 +23,165 @@ export async function execute(interaction) {
     if (!role) {
       // Role not found
       const errorEmbed = createErrorEmbed(
-        'Role Not Found',
-        'The selected role could not be found. It may have been deleted.'
+        'Роль не найдена',
+        'Выбранная роль не найдена. Возможно, она была удалена.'
       );
 
-      await interaction.update({
+      await interaction.reply({
         embeds: [errorEmbed],
-        components: []
+        components: [],
+        ephemeral: true
       });
       return;
     }
 
     // Create loading embed
-    const loadingEmbed = createLoadingEmbed(
-      'Moving Role',
-      `Moving role **${role.name}** up in the hierarchy...`
-    );
+    const loadingEmbed = createLoadingEmbed('Перемещение роли вверх...');
 
-    // Update with loading message
-    await interaction.update({
+    // Send loading message
+    await interaction.reply({
       embeds: [loadingEmbed],
-      components: []
+      ephemeral: true
     });
 
-    // Get the current position
+    // Get the bot's highest role
+    const botHighestRole = interaction.guild.members.me.roles.highest;
+    
+    // Check if the role is already at the highest possible position
+    if (role.position >= botHighestRole.position - 1) {
+      return await interaction.editReply({
+        embeds: [createErrorEmbed(
+          'Невозможно переместить роль',
+          'Эта роль уже находится на максимально возможной позиции или выше позиции бота.'
+        )],
+        components: [
+          new ActionRowBuilder()
+            .addComponents(
+              new ButtonBuilder()
+                .setCustomId(isFromManageRole ? `manage_role:${roleId}` : 'back_to_panel')
+                .setLabel(isFromManageRole ? 'Вернуться к управлению ролью' : 'Назад в главное меню')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('◀️')
+            )
+        ],
+        ephemeral: true
+      });
+    }
+    
+    // Get all roles and sort them by position
+    const allRoles = await interaction.guild.roles.fetch();
+    const sortedRoles = [...allRoles.values()].sort((a, b) => a.position - b.position);
+    
+    // Find the role's current position in the sorted array
+    const currentIndex = sortedRoles.findIndex(r => r.id === role.id);
+    
+    // Find the next role above this one that the bot can move
+    let targetIndex = currentIndex + 1;
+    while (targetIndex < sortedRoles.length && 
+           (sortedRoles[targetIndex].position >= botHighestRole.position || 
+            sortedRoles[targetIndex].managed)) {
+      targetIndex++;
+    }
+    
+    // If we couldn't find a valid target position
+    if (targetIndex >= sortedRoles.length || targetIndex === currentIndex) {
+      return await interaction.editReply({
+        embeds: [createErrorEmbed(
+          'Невозможно переместить роль',
+          'Нет доступных позиций выше текущей, или все роли выше управляются интеграциями.'
+        )],
+        components: [
+          new ActionRowBuilder()
+            .addComponents(
+              new ButtonBuilder()
+                .setCustomId(isFromManageRole ? `manage_role:${roleId}` : 'back_to_panel')
+                .setLabel(isFromManageRole ? 'Вернуться к управлению ролью' : 'Назад в главное меню')
+                .setStyle(ButtonStyle.Secondary)
+                .setEmoji('◀️')
+            )
+        ],
+        ephemeral: true
+      });
+    }
+    
+    // Get the target role
+    const targetRole = sortedRoles[targetIndex];
+    
+    // Store the current position for the success message
     const currentPosition = role.position;
     
-    // Move the role up (higher position number)
-    await role.setPosition(currentPosition + 1, { reason: `Moved by ${interaction.user.tag}` });
+    // Move the role to the new position
+    await role.setPosition(targetRole.position, { reason: `Перемещено администратором ${interaction.user.tag}` });
     
     // Fetch the updated role
     const updatedRole = await interaction.guild.roles.fetch(roleId);
-
-    // Create success embed
-    const successEmbed = createSuccessEmbed(
-      'Role Moved',
-      `Successfully moved role **${updatedRole.name}**\n` +
-      `Previous Position: **${currentPosition}**\n` +
-      `New Position: **${updatedRole.position}**`
-    );
-
+    
+    // Create a success embed
+    const successEmbed = new EmbedBuilder()
+      .setTitle('✅ Роль перемещена вверх')
+      .setColor(role.color || '#2ecc71')
+      .setDescription(
+        `Роль **${updatedRole.name}** успешно перемещена\n` +
+        `Предыдущая позиция: **${currentPosition}**\n` +
+        `Новая позиция: **${updatedRole.position}**`
+      )
+      .setTimestamp();
+    
     // Create buttons for further actions
-    const row = new ActionRowBuilder()
+    const row1 = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId(`move_role_up:${roleId}`)
-          .setLabel('Move Up Again')
+          .setLabel('Переместить ещё выше')
           .setStyle(ButtonStyle.Primary)
           .setEmoji('⬆️'),
         new ButtonBuilder()
           .setCustomId(`move_role_down:${roleId}`)
-          .setLabel('Move Down')
+          .setLabel('Переместить вниз')
           .setStyle(ButtonStyle.Primary)
-          .setEmoji('⬇️'),
+          .setEmoji('⬇️')
+      );
+    
+    const row2 = new ActionRowBuilder()
+      .addComponents(
         new ButtonBuilder()
-          .setCustomId('back_to_panel')
-          .setLabel('Back to Main Panel')
+          .setCustomId(isFromManageRole ? `manage_role:${roleId}` : 'back_to_panel')
+          .setLabel(isFromManageRole ? 'Вернуться к управлению ролью' : 'Назад в главное меню')
           .setStyle(ButtonStyle.Secondary)
           .setEmoji('◀️')
       );
-
-    // Update with success message
+    
+    // Update the reply with the success message
     await interaction.editReply({
       embeds: [successEmbed],
-      components: [row]
+      components: [row1, row2],
+      ephemeral: true
     });
   } catch (error) {
-    console.error(error);
+    console.error('Error in moveRoleUp:', error);
     
-    // Create error embed
+    // Create an error embed
     const errorEmbed = createErrorEmbed(
-      'Error Moving Role',
-      `Failed to move role: **${error.message}**\n` +
-      'Please check that the bot has the necessary permissions and try again.'
+      'Ошибка при перемещении роли',
+      `Произошла ошибка: ${error.message}\n` +
+      'Убедитесь, что у бота есть необходимые права и попробуйте снова.'
     );
-
+    
     // Create back button
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
-          .setCustomId('back_to_panel')
-          .setLabel('Back to Main Panel')
+          .setCustomId(isFromManageRole ? `manage_role:${roleId}` : 'back_to_panel')
+          .setLabel(isFromManageRole ? 'Вернуться к управлению ролью' : 'Назад в главное меню')
           .setStyle(ButtonStyle.Secondary)
           .setEmoji('◀️')
       );
-
-    // Update with error message
+    
+    // Update the reply with the error message
     await interaction.editReply({
       embeds: [errorEmbed],
-      components: [row]
+      components: [row],
+      ephemeral: true
     });
   }
 }

@@ -1,4 +1,4 @@
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder } from 'discord.js';
 import { checkAdmin } from '../../utils/permissions.js';
 import { createPanelEmbed } from '../../utils/embeds.js';
 
@@ -16,80 +16,54 @@ export async function execute(interaction) {
   
   // Create an embed to display the roles
   const embed = new EmbedBuilder()
-    .setTitle('📋 Server Roles')
+    .setTitle('📋 Управление ролями сервера')
     .setColor('#3498db')
-    .setDescription('Here are all the roles in this server, sorted by position:')
+    .setDescription('Здесь вы можете просматривать и управлять ролями сервера.\n\n**Выберите роль из списка ниже для управления:**')
     .setTimestamp();
   
-  // Add fields for each role with its position, color, and member count
-  let rolesText = '';
+  // Filter out @everyone role and roles higher than the bot's highest role
+  const botRole = interaction.guild.members.me.roles.highest;
+  const availableRoles = sortedRoles.filter(role => 
+    !role.managed && 
+    role.id !== interaction.guild.id && // Filter out @everyone
+    role.position < botRole.position // Filter out roles higher than the bot's highest role
+  );
   
-  sortedRoles.forEach(role => {
-    // Skip @everyone role
-    if (role.name === '@everyone') return;
-    
+  // Create select menu options (limit to 25 due to Discord API limitations)
+  const selectOptions = availableRoles.slice(0, 25).map(role => {
     const hexColor = role.hexColor === '#000000' ? 'Default' : role.hexColor;
-    const memberCount = role.members.size;
-    
-    rolesText += `**${role.position}.** ${role.name} (${role.id})\n`;
-    rolesText += `> Color: ${hexColor} | Members: ${memberCount}\n`;
-    rolesText += `> Mentionable: ${role.mentionable ? '✅' : '❌'} | Hoisted: ${role.hoist ? '✅' : '❌'}\n\n`;
+    return {
+      label: role.name,
+      description: `Позиция: ${role.position} | Цвет: ${hexColor}`,
+      value: `manage_role:${role.id}`,
+      emoji: '👑'
+    };
   });
   
-  // Split the roles text into chunks if it's too long
-  const maxLength = 4000; // Maximum length for embed description
+  // Create a select menu for role management
+  const selectMenu = new StringSelectMenuBuilder()
+    .setCustomId('manage_role_select')
+    .setPlaceholder('Выберите роль для управления')
+    .addOptions(selectOptions);
   
-  if (rolesText.length <= maxLength) {
-    embed.setDescription(`Here are all the roles in this server, sorted by position:\n\n${rolesText}`);
-  } else {
-    embed.setDescription('Here are all the roles in this server, sorted by position:');
-    
-    // Split the roles text into chunks
-    let currentChunk = '';
-    let fieldCount = 0;
-    
-    sortedRoles.forEach(role => {
-      // Skip @everyone role
-      if (role.name === '@everyone') return;
-      
-      const hexColor = role.hexColor === '#000000' ? 'Default' : role.hexColor;
-      const memberCount = role.members.size;
-      
-      const roleText = `**${role.position}.** ${role.name} (${role.id})\n` +
-                       `> Color: ${hexColor} | Members: ${memberCount}\n` +
-                       `> Mentionable: ${role.mentionable ? '✅' : '❌'} | Hoisted: ${role.hoist ? '✅' : '❌'}\n\n`;
-      
-      // Check if adding this role would exceed the field value limit
-      if (currentChunk.length + roleText.length > 1024) {
-        embed.addFields({ name: `Roles (Part ${++fieldCount})`, value: currentChunk });
-        currentChunk = roleText;
-      } else {
-        currentChunk += roleText;
-      }
-    });
-    
-    // Add the last chunk if it's not empty
-    if (currentChunk.length > 0) {
-      embed.addFields({ name: `Roles (Part ${++fieldCount})`, value: currentChunk });
-    }
-  }
+  const selectRow = new ActionRowBuilder().addComponents(selectMenu);
   
   // Create buttons for role management
   const row = new ActionRowBuilder()
     .addComponents(
       new ButtonBuilder()
         .setCustomId('create_role')
-        .setLabel('Create Role')
+        .setLabel('Создать роль')
         .setStyle(ButtonStyle.Success)
         .setEmoji('➕'),
       new ButtonBuilder()
         .setCustomId('delete_role')
-        .setLabel('Delete Role')
+        .setLabel('Удалить роль')
         .setStyle(ButtonStyle.Danger)
         .setEmoji('🗑️'),
       new ButtonBuilder()
         .setCustomId('move_role')
-        .setLabel('Move Role')
+        .setLabel('Переместить роль')
         .setStyle(ButtonStyle.Primary)
         .setEmoji('↕️')
     );
@@ -98,12 +72,12 @@ export async function execute(interaction) {
     .addComponents(
       new ButtonBuilder()
         .setCustomId('role_permissions')
-        .setLabel('Manage Permissions')
+        .setLabel('Управление правами')
         .setStyle(ButtonStyle.Primary)
         .setEmoji('🔒'),
       new ButtonBuilder()
         .setCustomId('bulk_role_operations')
-        .setLabel('Bulk Operations')
+        .setLabel('Массовые операции')
         .setStyle(ButtonStyle.Primary)
         .setEmoji('📋')
     );
@@ -113,15 +87,42 @@ export async function execute(interaction) {
     .addComponents(
       new ButtonBuilder()
         .setCustomId('back_to_panel')
-        .setLabel('Back to Main Panel')
+        .setLabel('Назад в главное меню')
         .setStyle(ButtonStyle.Secondary)
         .setEmoji('◀️')
     );
   
-  // Send the embed with the buttons
+  // Add information about roles to the embed
+  let rolesInfo = '';
+  let count = 0;
+  
+  for (const role of sortedRoles) {
+    // Skip @everyone role
+    if (role.name === '@everyone') continue;
+    
+    // Limit to 15 roles in the description to avoid it being too long
+    if (count >= 15) break;
+    
+    const hexColor = role.hexColor === '#000000' ? 'Default' : role.hexColor;
+    const memberCount = role.members.size;
+    
+    rolesInfo += `**${role.position}.** ${role.name}\n`;
+    rolesInfo += `> Цвет: ${hexColor} | Участников: ${memberCount}\n`;
+    rolesInfo += `> Упоминаемая: ${role.mentionable ? '✅' : '❌'} | Отображаемая: ${role.hoist ? '✅' : '❌'}\n\n`;
+    
+    count++;
+  }
+  
+  if (sortedRoles.length > 15) {
+    rolesInfo += `*...и еще ${sortedRoles.length - 15} ролей*`;
+  }
+  
+  embed.setDescription(`Здесь вы можете просматривать и управлять ролями сервера.\n\n**Выберите роль из списка ниже для управления:**\n\n${rolesInfo}`);
+  
+  // Send the embed with the select menu and buttons
   await interaction.reply({
     embeds: [embed],
-    components: [row, row2, row3],
+    components: [selectRow, row, row2, row3],
     ephemeral: true
   });
 }
