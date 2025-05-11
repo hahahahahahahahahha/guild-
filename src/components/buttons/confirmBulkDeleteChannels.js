@@ -1,6 +1,6 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { checkAdmin } from '../../utils/permissions.js';
-import { createSuccessEmbed, createErrorEmbed, createProgressEmbed, createPanelEmbed } from '../../utils/embeds.js';
+import { createSuccessEmbed, createErrorEmbed, createLoadingEmbed, createPanelEmbed } from '../../utils/embeds.js';
 
 export const customId = 'confirm_bulk_delete_channels';
 
@@ -13,7 +13,7 @@ export async function execute(interaction) {
   
   // Send an initial response
   await interaction.reply({
-    embeds: [createProgressEmbed('Deleting Channels', `Starting to delete ${channelIds.length} channels...`)],
+    embeds: [createLoadingEmbed('Deleting Channels', `Starting to delete ${channelIds.length} channels...`)],
     ephemeral: true
   });
 
@@ -42,7 +42,7 @@ export async function execute(interaction) {
       
       // Update the progress
       await interaction.editReply({
-        embeds: [createProgressEmbed(
+        embeds: [createLoadingEmbed(
           'Deleting Channels',
           `Progress: ${i + 1}/${channelIds.length} channels deleted\n\n` +
           `Last deleted: **${channelName}**`

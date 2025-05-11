@@ -1,6 +1,6 @@
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { checkAdmin } from '../../utils/permissions.js';
-import { createSuccessEmbed, createErrorEmbed, createProgressEmbed, createPanelEmbed } from '../../utils/embeds.js';
+import { createSuccessEmbed, createErrorEmbed, createLoadingEmbed, createPanelEmbed } from '../../utils/embeds.js';
 
 export const customId = 'confirm_bulk_delete_roles';
 
@@ -13,7 +13,7 @@ export async function execute(interaction) {
   
   // Send an initial response
   await interaction.reply({
-    embeds: [createProgressEmbed('Deleting Roles', `Starting to delete ${roleIds.length} roles...`)],
+    embeds: [createLoadingEmbed('Deleting Roles', `Starting to delete ${roleIds.length} roles...`)],
     ephemeral: true
   });
 
@@ -42,7 +42,7 @@ export async function execute(interaction) {
       
       // Update the progress
       await interaction.editReply({
-        embeds: [createProgressEmbed(
+        embeds: [createLoadingEmbed(
           'Deleting Roles',
           `Progress: ${i + 1}/${roleIds.length} roles deleted\n\n` +
           `Last deleted: **${roleName}**`
