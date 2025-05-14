@@ -197,5 +197,4 @@ src/
 ```
 
 ## License
-
-MIT
+by gls63
