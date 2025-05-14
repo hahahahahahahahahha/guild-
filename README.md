@@ -1,6 +1,9 @@
 # Discord Guild Management Bot
 
-A powerful Discord bot built with Discord.js v14 that provides comprehensive role and channel management through an interactive interface with buttons and select menus. The bot features a Russian language interface for improved user experience.
+A powerful Discord bot built with Discord.js v14 that provides comprehensive role and channel management through an interactive interface with buttons and select menus. The bot features a Russian language interface for improved user experience. If you find a bug or something is not working, write to me in a discord private message: 
+```
+welcomethenewking | 1354758424491196487
+```
 
 ## Features
 
